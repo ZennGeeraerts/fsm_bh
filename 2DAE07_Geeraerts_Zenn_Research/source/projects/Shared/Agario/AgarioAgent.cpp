@@ -17,6 +17,7 @@ AgarioAgent::AgarioAgent(Elite::Vector2 pos, Color color)
 	m_pWander = new Wander();
 	m_pSeek = new Seek();
 	m_pFlee = new Flee();
+	m_pPursuit = new Pursuit();
 }
 
 AgarioAgent::AgarioAgent(Elite::Vector2 pos)
@@ -86,6 +87,12 @@ void AgarioAgent::SetToFlee(Elite::Vector2 fleePos)
 {
 	m_pFlee->SetTarget(fleePos);
 	SetSteeringBehavior(m_pFlee);
+}
+
+void AgarioAgent::SetToPursuit(Elite::Vector2 pursuitPos)
+{
+	m_pPursuit->SetTarget(pursuitPos);
+	SetSteeringBehavior(m_pPursuit);
 }
 
 void AgarioAgent::OnUpgrade(float amountOfFood)

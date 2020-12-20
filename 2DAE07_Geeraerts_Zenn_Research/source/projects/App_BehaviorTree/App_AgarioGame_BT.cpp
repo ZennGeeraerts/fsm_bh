@@ -58,7 +58,17 @@ void App_AgarioGame_BT::Start()
 		AgarioAgent* newAgent = new AgarioAgent(randomPos);
 		//Add Decision making structure
 		Blackboard* pB{ CreateBlackboard(newAgent) };
-		BehaviorTree* pBehaviorTree{ new BehaviorTree{ pB, new BehaviorAction{ ChangeToWander } } };
+		BehaviorTree* pBehaviorTree{ new BehaviorTree{ pB,
+			new BehaviorSelector{
+			{
+				new BehaviorSequence{
+				{
+					new BehaviorConditional{ IsCloseToBorder },
+					new BehaviorAction{ ChangeToFlee }
+				} },
+				new BehaviorAction{ ChangeToWander }
+			} }
+		} };
 		newAgent->SetDecisionMaking(pBehaviorTree);
 
 		m_pAgentVec.push_back(newAgent);
@@ -78,15 +88,41 @@ void App_AgarioGame_BT::Start()
 	BehaviorTree* pBehaviorTree{ new BehaviorTree{ pB,
 		new BehaviorSelector{
 		{
+			/*new BehaviorSequence{
+			{
+				new BehaviorConditional{ IsCloseToEnemy },
+				new BehaviorSequence{
+				{
+					new BehaviorConditional{ IsClosestEnemyBigger },
+					new BehaviorAction{ ChangeToFlee }
+				} },
+				new BehaviorSequence{
+				{
+					new BehaviorConditional{ IsClosestEnemySmaller },
+					new BehaviorAction{ ChangeToPursuit }
+				} },
+			} },*/
 			new BehaviorSequence{
 			{
-				new BehaviorConditional{ IsCloseToBiggerEnemy },
+				new BehaviorConditional{ IsCloseToEnemy },
+				new BehaviorConditional{ IsClosestEnemyBigger },
 				new BehaviorAction{ ChangeToFlee }
+			} },
+			new BehaviorSequence{
+			{
+				new BehaviorConditional{ IsCloseToEnemy },
+				new BehaviorConditional{ IsClosestEnemySmaller },
+				new BehaviorAction{ ChangeToPursuit }
 			} },
 			new BehaviorSequence{
 			{
 				new BehaviorConditional{ IsCloseToFood },
 				new BehaviorAction{ ChangeToSeek }
+			} },
+			new BehaviorSequence{
+			{
+				new BehaviorConditional{ IsCloseToBorder },
+				new BehaviorAction{ ChangeToFlee }
 			} },
 			new BehaviorAction{ ChangeToWander }
 		} }
@@ -155,6 +191,7 @@ Blackboard* App_AgarioGame_BT::CreateBlackboard(AgarioAgent* a)
 	pBlackboard->AddData("WorldSize", m_TrimWorldSize);
 	pBlackboard->AddData("Target", Elite::Vector2{});
 	pBlackboard->AddData("Time", 0.0f); 
+	pBlackboard->AddData("ClosestEnemy", a);
 
 	return pBlackboard;
 }

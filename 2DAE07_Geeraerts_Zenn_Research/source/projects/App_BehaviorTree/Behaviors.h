@@ -45,7 +45,7 @@ bool IsCloseToFood(Elite::Blackboard* pBlackboard)
 	return false;
 }
 
-bool IsCloseToBiggerEnemy(Elite::Blackboard* pBlackboard)
+bool IsCloseToEnemy(Elite::Blackboard* pBlackboard)
 {
 	AgarioAgent* pAgent{ nullptr };
 	std::vector<AgarioAgent*>* agentsVec{ nullptr };
@@ -58,7 +58,7 @@ bool IsCloseToBiggerEnemy(Elite::Blackboard* pBlackboard)
 
 	// find close enemies
 	const float closeToEnemyRange{ 20.f };
-	std::vector<AgarioAgent*> closeByBiggerAgents{};
+	std::vector<AgarioAgent*> closeAgents{};
 	for (size_t i{}; i < (*agentsVec).size(); ++i)
 	{
 		if ((*agentsVec)[i]->CanBeDestroyed())
@@ -72,24 +72,100 @@ bool IsCloseToBiggerEnemy(Elite::Blackboard* pBlackboard)
 
 		if (distancePlayerEnemy < closeToEnemyRange)
 		{
-			if ((*agentsVec)[i]->GetRadius() > pAgent->GetRadius())
-			{
-				closeByBiggerAgents.push_back((*agentsVec)[i]);
-			}
+			closeAgents.push_back((*agentsVec)[i]);
 		}
 	}
 
-	auto it = std::min_element(closeByBiggerAgents.begin(), closeByBiggerAgents.end(), [pAgent](AgarioAgent* pAgarioAgent1, AgarioAgent* pAgarioAgent2)
+	// Get the closest enemy of the closeAgents
+	auto it = std::min_element(closeAgents.begin(), closeAgents.end(), [pAgent](AgarioAgent* pAgarioAgent1, AgarioAgent* pAgarioAgent2)
 		{
-			float distanceFood1Sqr{ (pAgarioAgent1->GetPosition() - pAgent->GetPosition()).MagnitudeSquared() };
-			float distanceFood2Sqr{ (pAgarioAgent2->GetPosition() - pAgent->GetPosition()).MagnitudeSquared() };
-			return distanceFood1Sqr < distanceFood2Sqr;
+			float distanceEnemy1Sqr{ (pAgarioAgent1->GetPosition() - pAgent->GetPosition()).MagnitudeSquared() };
+			float distanceEnemy2Sqr{ (pAgarioAgent2->GetPosition() - pAgent->GetPosition()).MagnitudeSquared() };
+			return distanceEnemy1Sqr < distanceEnemy2Sqr;
 		});
 
-	if ((it != closeByBiggerAgents.end()) && (!(*it)->CanBeDestroyed()))
+	if ((it != closeAgents.end()) && (!(*it)->CanBeDestroyed()))
 	{
-		// set flee target to it
-		pBlackboard->ChangeData("Target", (*it)->GetPosition());
+		pBlackboard->ChangeData("ClosestEnemy", (*it));
+		return true;
+	}
+
+	return false;
+}
+
+bool IsClosestEnemyBigger(Elite::Blackboard* pBlackboard)
+{
+	AgarioAgent* pAgent{ nullptr };
+	AgarioAgent* pClosestEnemy{ nullptr };
+
+	auto dataAvailable{ pBlackboard->GetData("Agent", pAgent) && pBlackboard->GetData("ClosestEnemy", pClosestEnemy) };
+	if (!dataAvailable)
+	{
+		return false;
+	}
+
+	if (pAgent->GetRadius() < pClosestEnemy->GetRadius())
+	{
+		pBlackboard->ChangeData("Target", pClosestEnemy->GetPosition());
+		return true;
+	}
+
+	return false;
+}
+
+bool IsClosestEnemySmaller(Elite::Blackboard* pBlackboard)
+{
+	AgarioAgent* pAgent{ nullptr };
+	AgarioAgent* pClosestEnemy{ nullptr };
+
+	auto dataAvailable{ pBlackboard->GetData("Agent", pAgent) && pBlackboard->GetData("ClosestEnemy", pClosestEnemy) };
+	if (!dataAvailable)
+	{
+		return false;
+	}
+
+	const float radiusOffset{ 2.0f };
+	if (pAgent->GetRadius() > (pClosestEnemy->GetRadius() + radiusOffset))
+	{
+		pBlackboard->ChangeData("Target", pClosestEnemy->GetPosition());
+		return true;
+	}
+
+	return false;
+}
+
+bool IsCloseToBorder(Elite::Blackboard* pBlackboard)
+{
+	float worldSize{};
+	AgarioAgent* pAgent{ nullptr };
+	auto dataAvailable = pBlackboard->GetData("WorldSize", worldSize) && pBlackboard->GetData("Agent", pAgent);
+
+	if (!dataAvailable)
+	{
+		return false;
+	}
+
+	const float maxDistanceToBorder{ 10.f };
+	const Elite::Vector2 agentPosition{ pAgent->GetPosition() };
+
+	if (agentPosition.x < (-worldSize + maxDistanceToBorder))
+	{
+		pBlackboard->ChangeData("Target", Elite::Vector2{ -worldSize, agentPosition.y });
+		return true;
+	}
+	else if (agentPosition.x > (worldSize - maxDistanceToBorder))
+	{
+		pBlackboard->ChangeData("Target", Elite::Vector2{ worldSize, agentPosition.y });
+		return true;
+	}
+	else if (agentPosition.y < (-worldSize + maxDistanceToBorder))
+	{
+		pBlackboard->ChangeData("Target", Elite::Vector2{ agentPosition.x, -worldSize });
+		return true;
+	}
+	else if (agentPosition.y > (worldSize - maxDistanceToBorder))
+	{
+		pBlackboard->ChangeData("Target", Elite::Vector2{ agentPosition.x, worldSize });
 		return true;
 	}
 
@@ -156,4 +232,23 @@ BehaviorState ChangeToFlee(Elite::Blackboard* pBlackboard)
 	return Success;
 }
 
+BehaviorState ChangeToPursuit(Elite::Blackboard* pBlackboard)
+{
+	AgarioAgent* pAgent = nullptr;
+	Elite::Vector2 pursuitTarget{};
+	auto dataAvailable = pBlackboard->GetData("Agent", pAgent) &&
+		pBlackboard->GetData("Target", pursuitTarget);
+
+	if (!dataAvailable)
+	{
+		return Failure;
+	}
+
+	if (!pAgent)
+		return Failure;
+
+	pAgent->SetToPursuit(pursuitTarget);
+
+	return Success;
+}
 #endif
