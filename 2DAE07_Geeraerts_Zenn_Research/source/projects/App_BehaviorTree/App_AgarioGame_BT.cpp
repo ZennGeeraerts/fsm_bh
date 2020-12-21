@@ -5,6 +5,7 @@
 #include "../Shared/Agario/AgarioAgent.h"
 #include "../Shared/Agario/AgarioContactListener.h"
 #include "projects/Shared/NavigationColliderElement.h"
+#include "../App_FiniteStateMachine/StatesAndTransitions.h"
 
 using namespace Elite;
 App_AgarioGame_BT::App_AgarioGame_BT()
@@ -31,6 +32,18 @@ App_AgarioGame_BT::~App_AgarioGame_BT()
 	for (auto pNC : m_vNavigationColliders)
 		SAFE_DELETE(pNC);
 	m_vNavigationColliders.clear();
+
+	for (auto& state : m_pStates)
+	{
+		SAFE_DELETE(state);
+	}
+	m_pStates.clear();
+
+	for (auto& trans : m_pTransitions)
+	{
+		SAFE_DELETE(trans);
+	}
+	m_pTransitions.clear();
 }
 
 void App_AgarioGame_BT::Start()
@@ -85,24 +98,16 @@ void App_AgarioGame_BT::Start()
 	m_pUberAgent = new AgarioAgent(randomPos, customColor);
 
 	Blackboard* pB{ CreateBlackboard(m_pUberAgent) };
+
 	BehaviorTree* pBehaviorTree{ new BehaviorTree{ pB,
 		new BehaviorSelector{
 		{
-			/*new BehaviorSequence{
+			new BehaviorSequence{
 			{
 				new BehaviorConditional{ IsCloseToEnemy },
-				new BehaviorSequence{
-				{
-					new BehaviorConditional{ IsClosestEnemyBigger },
-					new BehaviorAction{ ChangeToFlee }
-				} },
-				new BehaviorSequence{
-				{
-					new BehaviorConditional{ IsClosestEnemySmaller },
-					new BehaviorAction{ ChangeToPursuit }
-				} },
-			} },*/
-			new BehaviorSequence{
+				new BehaviorAction{ RunFSM }
+			} },
+			/*new BehaviorSequence{
 			{
 				new BehaviorConditional{ IsCloseToEnemy },
 				new BehaviorConditional{ IsClosestEnemyBigger },
@@ -113,7 +118,7 @@ void App_AgarioGame_BT::Start()
 				new BehaviorConditional{ IsCloseToEnemy },
 				new BehaviorConditional{ IsClosestEnemySmaller },
 				new BehaviorAction{ ChangeToPursuit }
-			} },
+			} },*/
 			new BehaviorSequence{
 			{
 				new BehaviorConditional{ IsCloseToFood },
@@ -127,6 +132,35 @@ void App_AgarioGame_BT::Start()
 			new BehaviorAction{ ChangeToWander }
 		} }
 	} };
+
+	pB->AddData("BT", pBehaviorTree);
+
+	WanderState* pWanderState{ new WanderState{} };
+	m_pStates.push_back(pWanderState);
+	EvadeBiggerEnemyState* pEvadeBiggerEnemyState{ new EvadeBiggerEnemyState{} };
+	m_pStates.push_back(pEvadeBiggerEnemyState);
+	PursuitSmallerEnemyState* pPursuitSmallerEnemyState{ new PursuitSmallerEnemyState{} };
+	m_pStates.push_back(pPursuitSmallerEnemyState);
+	RunBehaviorTreeState* pRunBehaviorTreeState{ new RunBehaviorTreeState{} };
+	m_pStates.push_back(pRunBehaviorTreeState);
+
+	CloseToBiggerEnemy* pCloseToBiggerEnemy{ new CloseToBiggerEnemy{} };
+	m_pTransitions.push_back(pCloseToBiggerEnemy);
+	EvadedEnemy* pEvadedEnemy{ new EvadedEnemy{} };
+	m_pTransitions.push_back(pEvadedEnemy);
+	CloseToSmallerEnemy* pCloseToSmallerEnemy{ new CloseToSmallerEnemy{} };
+	m_pTransitions.push_back(pCloseToSmallerEnemy);
+	PursuitedEnemy* pPursuitedEnemy{ new PursuitedEnemy{} };
+	m_pTransitions.push_back(pPursuitedEnemy);
+
+	FiniteStateMachine* pFSM{ new FiniteStateMachine{ pRunBehaviorTreeState, pB } };
+
+	pFSM->AddTransition(pRunBehaviorTreeState, pEvadeBiggerEnemyState, pCloseToBiggerEnemy);
+	pFSM->AddTransition(pEvadeBiggerEnemyState, pRunBehaviorTreeState, pEvadedEnemy);
+	pFSM->AddTransition(pRunBehaviorTreeState, pPursuitSmallerEnemyState, pCloseToSmallerEnemy);
+	pFSM->AddTransition(pPursuitSmallerEnemyState, pRunBehaviorTreeState, pPursuitedEnemy);
+
+	pB->AddData("FSM", pFSM);
 
 	m_pUberAgent->SetDecisionMaking(pBehaviorTree);
 }

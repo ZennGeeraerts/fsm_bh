@@ -251,4 +251,26 @@ BehaviorState ChangeToPursuit(Elite::Blackboard* pBlackboard)
 
 	return Success;
 }
+
+BehaviorState RunFSM(Elite::Blackboard* pBlackboard)
+{
+	std::cout << "Run FSM\n";
+	AgarioAgent* pAgent{ nullptr };
+	FiniteStateMachine* pFSM{ nullptr };
+
+	auto dataAvailable = pBlackboard->GetData("Agent", pAgent) &&
+		pBlackboard->GetData("FSM", pFSM);
+
+	if (!dataAvailable)
+	{
+		return Failure;
+	}
+
+	if (!pAgent)
+		return Failure;
+
+	pAgent->SetDecisionMaking(pFSM);
+
+	return Success;
+}
 #endif

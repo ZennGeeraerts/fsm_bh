@@ -36,6 +36,10 @@ private:
 
 	//--Level--
 	std::vector<NavigationColliderElement*> m_vNavigationColliders = {};
+
+	// FSM
+	std::vector<Elite::FSMState*> m_pStates{};
+	std::vector<Elite::FSMTransition*> m_pTransitions{};
 private:	
 	template<class T_AgarioType>
 	void UpdateAgarioEntities(vector<T_AgarioType*>& entities, float deltaTime);

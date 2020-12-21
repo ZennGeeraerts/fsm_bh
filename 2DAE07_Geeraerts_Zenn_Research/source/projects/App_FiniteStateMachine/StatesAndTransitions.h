@@ -85,17 +85,68 @@ public:
 			return;
 		}
 
-		AgarioAgent* target{ nullptr };
-		dataAvailable = pB->GetData("AgentTarget", target);
+		Elite::Vector2 target{};
+		dataAvailable = pB->GetData("Target", target);
 		if (!dataAvailable)
 		{
 			return;
 		}
 
-		if (!target->CanBeDestroyed())
+		pAgent->SetToFlee(target);
+	}
+};
+
+class PursuitSmallerEnemyState : public FSMState
+{
+public:
+	PursuitSmallerEnemyState()
+		: FSMState()
+	{
+
+	}
+
+	virtual void OnEnter(Blackboard* pB) override
+	{
+		AgarioAgent* pAgent{ nullptr };
+		bool dataAvailable{ pB->GetData("Agent", pAgent) };
+		if (!dataAvailable || !pAgent)
 		{
-			pAgent->SetToFlee(target->GetPosition());
+			return;
 		}
+
+		Elite::Vector2 target{};
+		dataAvailable = pB->GetData("Target", target);
+		if (!dataAvailable)
+		{
+			return;
+		}
+
+		pAgent->SetToPursuit(target);
+	}
+};
+
+class RunBehaviorTreeState : public FSMState
+{
+public:
+	RunBehaviorTreeState()
+		: FSMState()
+	{
+
+	}
+
+	virtual void OnEnter(Blackboard* pB) override
+	{
+		std::cout << "Run behavior tree\n";
+		AgarioAgent* pAgent{ nullptr };
+		BehaviorTree* pBehaviorTree{ nullptr };
+
+		bool dataAvailable{ pB->GetData("Agent", pAgent) && pB->GetData("BT", pBehaviorTree) };
+		if (!dataAvailable)
+		{
+			return;
+		}
+
+		pAgent->SetDecisionMaking(pBehaviorTree);
 	}
 };
 
@@ -207,57 +258,23 @@ public:
 
 	virtual bool ToTransition(Blackboard* pBlackboard) const override
 	{
-		std::vector<AgarioAgent*>* pAgentVec{ nullptr };
-		pBlackboard->GetData("AgentVec", pAgentVec);
-
 		AgarioAgent* pAgent{ nullptr };
-		pBlackboard->GetData("Agent", pAgent);
-		// is food close by?
-		// return true
-		// else return false
+		AgarioAgent* pClosestEnemy{ nullptr };
 
-		std::vector<AgarioAgent*> closeByBiggerAgents{};
-		for (size_t i{}; i < (*pAgentVec).size(); ++i)
-		{
-			if ((*pAgentVec)[i]->CanBeDestroyed())
-			{
-				continue;
-			}
-
-			float distancePlayerEnemy{ ((*pAgentVec)[i]->GetPosition() - pAgent->GetPosition()).Magnitude() };
-			distancePlayerEnemy -= pAgent->GetRadius();
-			distancePlayerEnemy -= (*pAgentVec)[i]->GetRadius();
-
-			if (distancePlayerEnemy < m_CloseByRange)
-			{
-				if ((*pAgentVec)[i]->GetRadius() > pAgent->GetRadius())
-				{
-					closeByBiggerAgents.push_back((*pAgentVec)[i]);
-				}
-			}
-		}
-
-		auto it = std::min_element(closeByBiggerAgents.begin(), closeByBiggerAgents.end(), [pAgent](AgarioAgent* pAgarioAgent1, AgarioAgent* pAgarioAgent2)
-			{
-				float distanceFood1Sqr{ (pAgarioAgent1->GetPosition() - pAgent->GetPosition()).MagnitudeSquared() };
-				float distanceFood2Sqr{ (pAgarioAgent2->GetPosition() - pAgent->GetPosition()).MagnitudeSquared() };
-				return distanceFood1Sqr < distanceFood2Sqr;
-			});
-
-		if ((it != closeByBiggerAgents.end()) && (!(*it)->CanBeDestroyed()))
-		{
-			// set seek target to it
-			pBlackboard->ChangeData("AgentTarget", *it);
-			// return true
-			return true;
-		}
-		else
+		auto dataAvailable{ pBlackboard->GetData("Agent", pAgent) && pBlackboard->GetData("ClosestEnemy", pClosestEnemy) };
+		if (!dataAvailable)
 		{
 			return false;
 		}
+		
+		if (pAgent->GetRadius() < pClosestEnemy->GetRadius())
+		{
+			pBlackboard->ChangeData("Target", pClosestEnemy->GetPosition());
+			return true;
+		}
+
+		return false;
 	}
-protected:
-	const float m_CloseByRange{ 20.f };
 };
 
 class EvadedEnemy : public FSMTransition
@@ -273,23 +290,15 @@ public:
 	virtual bool ToTransition(Blackboard* pBlackboard) const override
 	{
 		AgarioAgent* pAgent{ nullptr };
-		pBlackboard->GetData("Agent", pAgent);
-
-		AgarioAgent* pEnemy{ nullptr };
-		pBlackboard->GetData("AgentTarget", pEnemy);
-		// is food close by?
-		// return true
-		// else return false
-
+		Elite::Vector2 target{};
 		
-		if (pEnemy->CanBeDestroyed())
+		auto dataAvailable = pBlackboard->GetData("Agent", pAgent) && pBlackboard->GetData("Target", target);
+		if (!dataAvailable)
 		{
-			return true;
+			return false;
 		}
 
-		float distancePlayerEnemy{ (pEnemy->GetPosition() - pAgent->GetPosition()).Magnitude() };
-		distancePlayerEnemy -= pAgent->GetRadius();
-		distancePlayerEnemy -= pEnemy->GetRadius();
+		float distancePlayerEnemy{ (target - pAgent->GetPosition()).Magnitude() };
 
 		if (distancePlayerEnemy > m_CloseByRange)
 		{
@@ -301,5 +310,67 @@ public:
 
 private:
 	const float m_CloseByRange{ 20.f };
+};
+
+class CloseToSmallerEnemy : public FSMTransition
+{
+public:
+	CloseToSmallerEnemy()
+		: FSMTransition()
+	{
+
+	}
+
+	virtual bool ToTransition(Blackboard* pBlackboard) const override
+	{
+		AgarioAgent* pAgent{ nullptr };
+		AgarioAgent* pClosestEnemy{ nullptr };
+
+		auto dataAvailable{ pBlackboard->GetData("Agent", pAgent) && pBlackboard->GetData("ClosestEnemy", pClosestEnemy) };
+		if (!dataAvailable)
+		{
+			return false;
+		}
+
+		const float radiusOffset{ 2.0f };
+		if (pAgent->GetRadius() > (pClosestEnemy->GetRadius() + radiusOffset))
+		{
+			pBlackboard->ChangeData("Target", pClosestEnemy->GetPosition());
+			return true;
+		}
+
+		return false;
+	}
+};
+
+class PursuitedEnemy : public FSMTransition
+{
+public:
+	PursuitedEnemy()
+		: FSMTransition()
+	{
+
+	}
+
+	virtual bool ToTransition(Blackboard* pBlackboard) const override
+	{
+		AgarioAgent* pAgent{ nullptr };
+		AgarioAgent* pClosestEnemy{ nullptr };
+
+		auto dataAvailable{ pBlackboard->GetData("Agent", pAgent) && pBlackboard->GetData("ClosestEnemy", pClosestEnemy) };
+		if (!dataAvailable)
+		{
+			return false;
+		}
+
+		float distanceAgentEnemy{ (pClosestEnemy->GetPosition() - pAgent->GetPosition()).Magnitude() };
+
+		if ((distanceAgentEnemy - pAgent->GetRadius()) < 0.01f)
+		{
+			return true;
+		}
+
+		return false;
+	}
 };
 #endif
