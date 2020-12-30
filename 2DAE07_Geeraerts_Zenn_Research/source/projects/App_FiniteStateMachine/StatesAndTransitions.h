@@ -134,9 +134,13 @@ public:
 
 	}
 
-	virtual void OnEnter(Blackboard* pB) override
+	virtual void OnEnter(Blackboard* pB)
 	{
 		std::cout << "Run behavior tree\n";
+	}
+
+	virtual void Update(Blackboard* pB, float deltaTime) override
+	{
 		AgarioAgent* pAgent{ nullptr };
 		BehaviorTree* pBehaviorTree{ nullptr };
 
@@ -145,7 +149,7 @@ public:
 		{
 			return;
 		}
-
+		
 		pAgent->SetDecisionMaking(pBehaviorTree);
 	}
 };
@@ -332,6 +336,11 @@ public:
 			return false;
 		}
 
+		if (pClosestEnemy->CanBeDestroyed())
+		{
+			return false;
+		}
+
 		const float radiusOffset{ 2.0f };
 		if (pAgent->GetRadius() > (pClosestEnemy->GetRadius() + radiusOffset))
 		{
@@ -361,6 +370,11 @@ public:
 		if (!dataAvailable)
 		{
 			return false;
+		}
+
+		if (pClosestEnemy->CanBeDestroyed())
+		{
+			return true;
 		}
 
 		float distanceAgentEnemy{ (pClosestEnemy->GetPosition() - pAgent->GetPosition()).Magnitude() };
