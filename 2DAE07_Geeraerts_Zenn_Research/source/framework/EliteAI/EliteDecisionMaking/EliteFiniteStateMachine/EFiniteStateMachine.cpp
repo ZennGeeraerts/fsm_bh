@@ -64,3 +64,8 @@ void Elite::FiniteStateMachine::SetState(FSMState* newState)
     }
         
 }
+
+void Elite::FiniteStateMachine::Reset()
+{
+    SetState(m_pStartState);
+}

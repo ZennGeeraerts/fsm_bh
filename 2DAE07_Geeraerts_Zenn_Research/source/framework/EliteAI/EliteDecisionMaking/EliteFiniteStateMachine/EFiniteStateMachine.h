@@ -43,6 +43,7 @@ namespace Elite
 		void AddTransition(FSMState* startState, FSMState* toState, FSMTransition* transition);
 		virtual void Update(float deltaTime) override;
 		Elite::Blackboard* GetBlackboard() const;
+		void Reset();
 
 	private:
 		void SetState(FSMState* newState);
@@ -52,6 +53,7 @@ namespace Elite
 
 		std::map<FSMState*, Transitions> m_Transitions; //Key is the state, value are all the transitions for that current state 
 		FSMState* m_pCurrentState;
+		FSMState* m_pStartState;
 		Blackboard* m_pBlackboard = nullptr; // takes ownership of the blackboard
 	};
 
