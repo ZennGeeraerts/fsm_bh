@@ -107,18 +107,6 @@ void App_AgarioGame_BT::Start()
 				new BehaviorConditional{ IsCloseToEnemy },
 				new BehaviorAction{ RunFSM }
 			} },
-			/*new BehaviorSequence{
-			{
-				new BehaviorConditional{ IsCloseToEnemy },
-				new BehaviorConditional{ IsClosestEnemyBigger },
-				new BehaviorAction{ ChangeToFlee }
-			} },
-			new BehaviorSequence{
-			{
-				new BehaviorConditional{ IsCloseToEnemy },
-				new BehaviorConditional{ IsClosestEnemySmaller },
-				new BehaviorAction{ ChangeToPursuit }
-			} },*/
 			new BehaviorSequence{
 			{
 				new BehaviorConditional{ IsCloseToFood },
