@@ -31,7 +31,7 @@ I am using the same blackboard for both decision making structures and I have a 
 In the finites state machine the agent evades enemies that are bigger and pursuits enemies that are smaller.
 It switches back to the behavior tree when it is done.
 
-![6fea2b654c6fdc2494f3f2865078ae0f](https://user-images.githubusercontent.com/76271773/105633319-2cff6480-5e58-11eb-8f39-6b48e011c4c8.png)
+![2079f7014fc16b6ba7a3c744f49e0400](https://user-images.githubusercontent.com/76271773/105642792-4f12da00-5e8c-11eb-86a0-1fec85d5d868.png)
 
 The finite state machine also saves its start state now and has a member function reset that sets the state back to the start state.
 This member function can be called before switching to the finite state machine to make it always start from its start state.
