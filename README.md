@@ -1,3 +1,7 @@
+<h1>Introduction</h1>
+For my research project I decided to find the advantages and disadvantages of the 2 decision making structures we have seen in class: finite state machine and behavior tree.
+Then I used this knowledge to combine the 2 for a more optimal decision making.
+I also upgraded the behavior tree by adding decorators and queries.
 <h1>Advantages and disadvantages of a finite state machine</h1>
 <h2>Advantages</h2>
 Finite state machines are easy to implement and easy to understand.
@@ -10,5 +14,9 @@ Behavior trees are modular which means there is a weak dependence between subtre
 <h2>Disadvantages</h2>
 They are harder to implement and understand than finite state machines. 
 
-State machines -> smaller problems
-Behavior trees -> bigger problems
+<h1>Conclusion</h1>
+Finites state machines are useful for smaller and easier problems while behavior trees are more useful for bigger and more complex problems.
+
+<h1>Project</h1>
+For my project I expanded on the agario game we had seen in class.
+
