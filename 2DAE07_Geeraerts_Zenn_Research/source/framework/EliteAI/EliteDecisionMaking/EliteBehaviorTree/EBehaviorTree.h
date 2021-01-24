@@ -123,6 +123,52 @@ namespace Elite
 	};
 
 	//-----------------------------------------------------------------
+	// BEHAVIOR TREE QUERY (IBehavior)
+	//-----------------------------------------------------------------
+	template <typename KeyType>
+	class BehaviorQuery : public IBehavior
+	{
+	public:
+		BehaviorQuery(std::function<bool(Blackboard*, KeyType&)> fp, const std::string& keyName)
+			: m_fpQuery(fp)
+			, m_KeyName{ keyName }
+		{}
+		virtual BehaviorState Execute(Blackboard* pBlackboard) override
+		{
+			if (m_fpQuery == nullptr)
+				return Failure;
+
+			KeyType keyValue{};
+			if (m_fpQuery(pBlackboard, keyValue))
+			{
+				if (pBlackboard->ChangeData(m_KeyName, keyValue))
+				{
+					return Success;
+				}
+			}
+
+			return Failure;
+		}
+	private:
+		std::function<bool(Blackboard*, KeyType&)> m_fpQuery;
+		std::string m_KeyName;
+	};
+
+
+	//-----------------------------------------------------------------
+	// BEHAVIOR TREE DECORATOR (IBehavior)
+	//-----------------------------------------------------------------
+	class BehaviorDecorator : public IBehavior
+	{
+	public:
+		BehaviorDecorator(const std::string& keyName, bool isSet);
+		virtual BehaviorState Execute(Blackboard* pBlackBoard) override;
+	private:
+		std::string m_KeyName;
+		bool m_IsSet;
+	};
+
+	//-----------------------------------------------------------------
 	// BEHAVIOR TREE (BASE)
 	//-----------------------------------------------------------------
 	class BehaviorTree final : public Elite::IDecisionMaking

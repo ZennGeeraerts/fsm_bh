@@ -97,3 +97,21 @@ BehaviorState BehaviorAction::Execute(Blackboard* pBlackBoard)
 
 	return m_CurrentState = m_fpAction(pBlackBoard);
 }
+//-----------------------------------------------------------------
+// BEHAVIOR TREE DECORATOR (IBehavior)
+//-----------------------------------------------------------------
+BehaviorState BehaviorDecorator::Execute(Blackboard* pBlackBoard)
+{
+	bool data{};
+	if (!pBlackBoard->GetData(m_KeyName, data))
+	{
+		return Failure;
+	}
+
+	if (data == m_IsSet)
+	{
+		return Success;
+	}
+
+	return Failure;
+}
