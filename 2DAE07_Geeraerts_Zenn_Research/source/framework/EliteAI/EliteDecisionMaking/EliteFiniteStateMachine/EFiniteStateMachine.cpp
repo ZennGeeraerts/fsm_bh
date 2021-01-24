@@ -5,6 +5,7 @@ using namespace Elite;
 
 Elite::FiniteStateMachine::FiniteStateMachine(FSMState* startState, Blackboard* pBlackboard)
     : m_pCurrentState(nullptr),
+    m_pStartState{ startState },
     m_pBlackboard(pBlackboard)
 {
     SetState(startState);

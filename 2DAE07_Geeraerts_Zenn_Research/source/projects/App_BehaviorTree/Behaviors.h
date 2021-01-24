@@ -66,6 +66,11 @@ bool IsCloseToEnemy(Elite::Blackboard* pBlackboard)
 			continue;
 		}
 
+		if (abs((*agentsVec)[i]->GetRadius() - pAgent->GetRadius()) < 0.001f)
+		{
+			continue;
+		}
+
 		float distancePlayerEnemy{ ((*agentsVec)[i]->GetPosition() - pAgent->GetPosition()).Magnitude() };
 		distancePlayerEnemy -= pAgent->GetRadius();
 		distancePlayerEnemy -= (*agentsVec)[i]->GetRadius();
@@ -269,6 +274,7 @@ BehaviorState RunFSM(Elite::Blackboard* pBlackboard)
 		return Failure;
 
 	std::cout << "Run FSM\n";
+	pFSM->Reset();
 	pAgent->SetDecisionMaking(pFSM);
 
 	return Success;

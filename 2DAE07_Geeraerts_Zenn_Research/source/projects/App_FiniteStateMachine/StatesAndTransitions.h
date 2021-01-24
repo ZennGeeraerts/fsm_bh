@@ -105,7 +105,7 @@ public:
 
 	}
 
-	virtual void OnEnter(Blackboard* pB) override
+	virtual void Update(Blackboard* pB, float dt) override
 	{
 		AgarioAgent* pAgent{ nullptr };
 		bool dataAvailable{ pB->GetData("Agent", pAgent) };
@@ -341,8 +341,7 @@ public:
 			return false;
 		}
 
-		const float radiusOffset{ 2.0f };
-		if (pAgent->GetRadius() > (pClosestEnemy->GetRadius() + radiusOffset))
+		if (pAgent->GetRadius() > (pClosestEnemy->GetRadius()))
 		{
 			pBlackboard->ChangeData("Target", pClosestEnemy->GetPosition());
 			return true;
@@ -377,6 +376,11 @@ public:
 			return true;
 		}
 
+		if (pClosestEnemy->GetRadius() >= pAgent->GetRadius())
+		{
+			return true;
+		}
+
 		float distanceAgentEnemy{ (pClosestEnemy->GetPosition() - pAgent->GetPosition()).Magnitude() };
 
 		if ((distanceAgentEnemy - pAgent->GetRadius()) < 0.01f)
@@ -384,6 +388,7 @@ public:
 			return true;
 		}
 
+		pBlackboard->ChangeData("Target", pClosestEnemy->GetPosition());
 		return false;
 	}
 };

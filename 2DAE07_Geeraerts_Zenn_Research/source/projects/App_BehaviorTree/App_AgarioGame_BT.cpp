@@ -141,11 +141,11 @@ void App_AgarioGame_BT::Start()
 	PursuitedEnemy* pPursuitedEnemy{ new PursuitedEnemy{} };
 	m_pTransitions.push_back(pPursuitedEnemy);
 
-	FiniteStateMachine* pFSM{ new FiniteStateMachine{ pRunBehaviorTreeState, pB } };
+	FiniteStateMachine* pFSM{ new FiniteStateMachine{ pWanderState, pB } };
 
-	pFSM->AddTransition(pRunBehaviorTreeState, pEvadeBiggerEnemyState, pCloseToBiggerEnemy);
+	pFSM->AddTransition(pWanderState, pEvadeBiggerEnemyState, pCloseToBiggerEnemy);
 	pFSM->AddTransition(pEvadeBiggerEnemyState, pRunBehaviorTreeState, pEvadedEnemy);
-	pFSM->AddTransition(pRunBehaviorTreeState, pPursuitSmallerEnemyState, pCloseToSmallerEnemy);
+	pFSM->AddTransition(pWanderState, pPursuitSmallerEnemyState, pCloseToSmallerEnemy);
 	pFSM->AddTransition(pPursuitSmallerEnemyState, pRunBehaviorTreeState, pPursuitedEnemy);
 
 	pB->AddData("FSM", pFSM);
