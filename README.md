@@ -7,10 +7,11 @@ I also upgraded the behavior tree by adding decorators and queries.
 Finite state machines are easy to implement and easy to understand.
 <h2>Disadvantages</h2>
 Finite state machines don’t scale well. There are n^2 possible transitions for each state. When a finite state machine becomes too big it becomes messy and unclear. Each action needs to know what to do next. 
-They also have the GOTO anology problem. In code with a lot of GOTO statements it is hard to expand, understand and debug the code. Finite state machines are full of them (transitions).
+They also have the GOTO anology problem. A GOTO statement is a "jump" between lines of code. In code with a lot of GOTO statements it is hard to expand, understand and debug the code. Finite state machines are full of them (transitions).
 <h1>Advantages and disadvantages of a behavior tree</h1>
 <h2>Advantages</h2>
-Behavior trees are modular which means there is a weak dependence between subtrees. It makes it easier to expand the code for example. They use the function call analogy instead of the GOTO analogy. 
+Behavior trees are modular which means there is a weak dependence between subtrees. They don't need to know what action to do next like in the finite state machine. The only thing it needs to know is if the action failed or succeeded. It makes it easier to expand the code for example. They use the function call analogy instead of the GOTO analogy.
+Which means they use function calls instead of GOTO statements.
 <h2>Disadvantages</h2>
 They are harder to implement and understand than finite state machines. 
 
